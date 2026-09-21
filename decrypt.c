@@ -1,6 +1,6 @@
 #include "bobcat.h"
 
-void encrypt_file(const char *filepath){
+void decrypt_file(const char *filepath){
     FILE *current_file = fopen(filepath, "rb+");
 
     if(current_file == NULL){
@@ -28,7 +28,7 @@ void encrypt_file(const char *filepath){
         }
 
         for(size_t i = 0; i < bytes_read; i++){
-            buffer[i] = (unsigned char)(buffer[i] + SHIFT);
+            buffer[i] = (unsigned char)(buffer[i] - SHIFT);
         }
 
         // shift position pointer back
@@ -58,7 +58,7 @@ void encrypt_file(const char *filepath){
     fclose(current_file);
 }
 
-void encrypt_directory(const char *folder_path){
+void decrypt_directory(const char *folder_path){
     DIR *dir = opendir(folder_path);
 
     if (dir == NULL){
@@ -79,6 +79,11 @@ void encrypt_directory(const char *folder_path){
         char filepath[100];
         strcpy(filepath, folder_path);
         strcat(filepath, "/");
-        encrypt_file(strcat(filepath, entry->d_name));
+        decrypt_file(strcat(filepath, entry->d_name));
     }
+}
+
+int main(void){
+    decrypt_directory("./test");
+    return 0;
 }
