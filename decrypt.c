@@ -1,5 +1,22 @@
 #include "bobcat.h"
 
+int analyse_path(const char *path){
+    struct stat path_stat;
+
+    if (lstat(path, &path_stat) != 0) {
+        fprintf(stderr, "This path doesn't exist or couldn't be accessed: %s\n", path);
+        return 0;
+    }
+
+    if (S_ISDIR(path_stat.st_mode)) {
+        return 1;
+    } else if (S_ISREG(path_stat.st_mode)) {
+        return 2;
+    } else {
+        return 0; 
+    }
+}
+
 void decrypt_file(const char *filepath){
     FILE *current_file = fopen(filepath, "rb+");
 
@@ -16,7 +33,7 @@ void decrypt_file(const char *filepath){
 
         if(position == -1L){
             fprintf(stderr, "ftell failed for file %s\n", filepath);
-            return;
+            break;
         }
 
         // read chunk into buffer / overwrites from the last iteration
@@ -62,12 +79,11 @@ void decrypt_directory(const char *folder_path){
     DIR *dir = opendir(folder_path);
 
     if (dir == NULL){
-        fprintf(stderr, "Error opening directory: %s", folder_path);
-        exit(1);
+        fprintf(stderr, "Error opening directory: %s\n", folder_path);
+        return;
     }
 
     struct dirent *entry; 
-    int i = 0;
 
     // entry holds info about each file or folder in the directory
     while((entry = readdir(dir)) != NULL){
@@ -76,11 +92,22 @@ void decrypt_directory(const char *folder_path){
             continue;
         }
 
-        char filepath[100];
-        strcpy(filepath, folder_path);
-        strcat(filepath, "/");
-        decrypt_file(strcat(filepath, entry->d_name));
+        char filepath[PATH_MAX];
+        snprintf(filepath, sizeof(filepath), "%s/%s", folder_path, entry->d_name);
+        
+        // analyse_path returns 0 if the path doesn't exist or it's a special file, 1 if it's a folder, 2 if it's a file
+        int path_type = analyse_path(filepath);
+
+        if(path_type == 1){
+            decrypt_directory(filepath);
+        } else if(path_type == 2){
+            decrypt_file(filepath);
+        } else{
+            continue;
+        }
     }
+
+    closedir(dir);
 }
 
 int main(void){
