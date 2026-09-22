@@ -75,7 +75,7 @@ void encrypt_file(const char *filepath){
     fclose(current_file);
 }
 
-void encrypt_directory(const char *folder_path){
+void encrypt_directory(const char *folder_path, int *file_count){
     DIR *dir = opendir(folder_path);
 
     if (dir == NULL){
@@ -99,9 +99,10 @@ void encrypt_directory(const char *folder_path){
         int path_type = analyse_path(filepath);
 
         if(path_type == 1){
-            encrypt_directory(filepath);
+            encrypt_directory(filepath, file_count);
         } else if(path_type == 2){
             encrypt_file(filepath);
+            (*file_count)++;
         } else{
             continue;
         }

@@ -75,7 +75,7 @@ void decrypt_file(const char *filepath){
     fclose(current_file);
 }
 
-void decrypt_directory(const char *folder_path){
+void decrypt_directory(const char *folder_path, int *files_count){
     DIR *dir = opendir(folder_path);
 
     if (dir == NULL){
@@ -99,9 +99,10 @@ void decrypt_directory(const char *folder_path){
         int path_type = analyse_path(filepath);
 
         if(path_type == 1){
-            decrypt_directory(filepath);
+            decrypt_directory(filepath, files_count);
         } else if(path_type == 2){
             decrypt_file(filepath);
+            (*files_count)++;
         } else{
             continue;
         }
@@ -111,6 +112,8 @@ void decrypt_directory(const char *folder_path){
 }
 
 int main(void){
-    decrypt_directory("./test");
+    int files_touched = 0;
+    decrypt_directory("./test", &files_touched);
+    printf("\n Went through %d files\n", files_touched);
     return 0;
 }
